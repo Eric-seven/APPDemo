@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <title>title</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <style>
+        html,
+        body {
+            height: 100%;
+            /*background-color: rgba(0, 0, 0, 0.7);*/
+            background-color: transparent;
+        }
+
+        header {
+            width: 100%;
+            height: 96px;
+        }
+
+        header .title {
+            box-sizing: border-box;
+            width: auto;
+            height: 96px;
+            margin: 0 32px;
+            padding-top: 64px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #c8026f;
+            color: #fff;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        section {
+            width: 100%;
+            height: auto;
+        }
+
+        .city {
+            width: 100%;
+            height: 55px;
+            line-height: 55px;
+            text-align: center;
+            font-size: 22px;
+            color: #fff;
+        }
+
+        .highlight {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="title">选择所需服务的区域</div>
+    </header>
+    <section id="list">
+        <!-- <div class="city" tapmode onclick="selectCity(0)">北京</div> -->
+    </section>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript">
+    apiready = function() {
+        fnGetCityList();
+    };
+
+    var cityList;
+
+    function fnGetCityList() {
+
+        var params = {
+            fields: {
+              createdAt: false,
+              updatedAt: false
+            },
+            where: {},
+            skip: 0,
+            limit: 32
+        }
+        params = $api.jsonToStr(params);
+        api.ajax({
+            url: 'http://d.apicloud.com/mcm/api/supportArea?filter=' + params,
+            method: 'get',
+            headers: {
+                "X-APICloud-AppId": "A6914327011091",
+                "X-APICloud-AppKey": "8ac17d22e49cb7982d82796097cec52a6c7cd01d.1475375422841"
+            }
+        }, function(ret, err) {
+
+            if (ret) {
+                //console.log(JSON.stringify(ret));
+                //console.log($api.jsonToStr(ret));
+                cityList = ret;
+                fnUpdateCityList(ret);
+            } else {
+                alert(JSON.stringify(err));
+            }
+        });
+
+    }
+
+    function selectCity(index_) {
+        var cities = $api.domAll(".city");
+        var cityName = $api.html(cities[index_]);
+        api.sendEvent({
+            name: 'citySelected',
+            extra: {
+                cityName: cityName
+            }
+        });
+    }
+
+    function fnUpdateCityList(data_) {
+      var list = $api.byId('list');
+      var html = '';
+      for (var i = 0; i < data_.length; i++) {
+        data_[i]
+        html += '<div class="city" tapmode onclick="fnSelectCity('+ i +')">'+ data_[i].name +'</div>'
+      }
+      $api.html(list, html);
+    }
+
+    function fnSelectCity(index_) {
+      $api.setStorage('currentCity', cityList[index_]);
+      api.sendEvent({
+          name: 'cityChange',
+          extra: {
+              currentCity: cityList[index_]
+          }
+      });
+      api.closeFrame();
+    }
+</script>
+
+</html>
