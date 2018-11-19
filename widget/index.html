@@ -40,7 +40,7 @@
                 if (result.update == true && result.closed == false) {
                     var str = '版本号:' + result.version + ';更新内容:' + result.updateTip + ';发布时间:' + result.time;
                     api.confirm({
-                        title : '有新的版本,是否下载并安装？',
+                        title : '有新的版本,是否下载并安装',
                         msg : str,
                         buttons : ['确定', '取消']
                     }, function(ret, err) {
