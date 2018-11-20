@@ -135,17 +135,7 @@
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript">
     apiready = function() {
-        fnInitEventLisener();
-        // 监听城市选择事件
-        // api.addEventListener({
-        //     name: 'citySelected'
-        // }, function(ret, err) {
-        //     $api.removeCls($api.byId("arrow"), 'active');
-        //     $api.html($api.byId("city"), ret.value.cityName);
-        //     api.closeFrame({
-        //         name: 'citySelectorFrame'
-        //     });
-        // });
+        fnInitEventListener();
 
         var header = $api.byId('header');
         $api.fixStatusBar(header);
@@ -154,11 +144,12 @@
         navH = $api.offset(nav).h;
         menus = $api.domAll($api.byId('nav'), '.menu');
 
-        $api.rmStorage('currentCity');
+        //$api.rmStorage('currentCity');  //测试首次进入弹出城市下拉框
+
         var currentCity = $api.getStorage('currentCity');
         if(!currentCity){
-          fnOpenCitySelectorFrame();
-          return;
+            fnOpenCitySelectorFrame();
+            return;
         }
 
         openFrames();
@@ -177,6 +168,39 @@
 
         api.bringFrameToFront({
             from: 'minicart_frame'
+        });
+
+    };
+
+    function fnInitEventListener() {
+        // 监听城市选择事件
+        api.addEventListener({
+            name: 'cityChange'
+        }, function(ret, err){
+            if( ret ){
+                $api.removeCls($api.byId("arrow"), 'active');
+                var city = $api.byId('city');
+                city.innerHTML = ret.value.currentCity.name;
+                openFrames();
+            }else{
+                alert( JSON.stringify( err ) );
+            }
+        });
+
+        api.addEventListener({
+            name: 'keyback'
+        }, function(ret, err){
+            api.confirm({
+                title: '提示',
+                msg: '是否退出应用',
+                buttons: ['确定', '取消']
+            }, function(ret, err){
+                if(ret.buttonIndex == 1){
+                    api.closeWidget();
+
+                }
+            });
+
         });
 
     }
@@ -278,34 +302,7 @@
       });
     }
 
-    function fnInitEventLisener() {
-      api.addEventListener({
-          name: 'cityChange'
-      }, function(ret, err){
-          if( ret ){
-               openFrames();
-          }else{
-               alert( JSON.stringify( err ) );
-          }
-      });
 
-      api.addEventListener({
-          name: 'keyback'
-      }, function(ret, err){
-          api.confirm({
-              title: '提示',
-              msg: '是否退出应用',
-              buttons: ['确定', '取消']
-          }, function(ret, err){
-              if(ret.buttonIndex == 1){
-                api.closeWidget();
-
-              }
-          });
-
-      });
-
-    }
 </script>
 
 </html>

@@ -3,9 +3,10 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
+    <meta name="viewport"
+          content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
     <title>title</title>
-    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
     <style>
         header {
             width: 100%;
@@ -134,37 +135,58 @@
 </head>
 
 <body>
-    <header id="header">
-        <img src="../image/default_rect.png" alt="" class="banner" id="banner">
-    </header>
-    <section id="list">
-        <div class="ware">
-            <div class="content">
-                <img src="../image/default_square.png" alt="" class="thumbnail">
-                <div class="info">
-                    <div class="name">name</div>
-                    <div class="description">description</div>
-                    <div class="price-tag">
-                        <span class="price">￥100</span>
-                        <span class="unit">/kg</span>
-                    </div>
-                    <div class="origin-price">
-                        <del>超市：￥110</del>
-                    </div>
-                    <div class="control">
-                        <img src="../image/add.png" alt="" class="add">
-                    </div>
+<header id="header">
+    <img src="../image/default_rect.png" alt="" class="banner" id="banner">
+</header>
+<section id="list">
+    <div class="ware">
+        <div class="content">
+            <img src="../image/default_square.png" alt="" class="thumbnail">
+            <div class="info">
+                <div class="name">name</div>
+                <div class="description">description</div>
+                <div class="price-tag">
+                    <span class="price">￥100</span>
+                    <span class="unit">/kg</span>
+                </div>
+                <div class="origin-price">
+                    <del>超市：￥110</del>
+                </div>
+                <div class="control">
+                    <img src="../image/add.png" alt="" class="add">
                 </div>
             </div>
         </div>
-    </section>
-    <div class="push-status" id="pushStatus">上拉显示更多</div>
+    </div>
+</section>
+<div class="push-status" id="pushStatus">上拉显示更多</div>
 </body>
 <script type="text/template" id="wareTemplate">
     {{~ it:ware:index}}
-    <div class="ware">
+    {{?0 == ware.showType}}
+    <div class="ware ware-0">
+        <div class="content" tapmode onclick="fnOpenWareWin('{{=ware.id}}');">
+            <img onload="fnLoadImage(this)" data-url="{{=ware.thumbnail.url}}" class="thumbnail"
+                 src="../image/default_rect.png">
+            <div class="info">
+                <span class="price">{{=ware.price}}</span>
+                <span class="unit">/{{=ware.unit}}</span>
+                <span class="origin-price">&nbsp;超市:<del>{{=ware.originPrice}}元</del></span>
+            </div>
+            <div class="control">
+                <div class="panel" id="panel_{{=ware.id}}">
+                    <img class="minus" src="../image/minus.png" tapmode onclick="fnMinus('{{=ware.id}}');">
+                    <div class="count" id="count_{{=ware.id}}">0</div>
+                </div>
+                <img class="add" src="../image/add.png" tapmode onclick="fnAdd('{{=ware.id}}');">
+            </div>
+        </div>
+    </div>
+    {{??}}
+    <div class="ware ware-1">
         <div class="content" tapmode onclick="fnOpenWareWin();">
-            <img onload="fnLoadImage(this)" data-url="{{= ware.thumbnail.url}}" src="../image/default_rect.png" class="thumbnail">
+            <img onload="fnLoadImage(this)" data-url="{{= ware.thumbnail.url}}" src="../image/default_rect.png"
+                 class="thumbnail">
             <div class="info">
                 <div class="name">{{= ware.name}}</div>
                 <div class="description">{{= ware.description}}</div>
@@ -181,180 +203,220 @@
             </div>
         </div>
     </div>
-    {{~}}
+    {{?}} {{~}}
 </script>
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript" src="../script/doT.min.js"></script>
 <script type="text/javascript">
-    apiready = function() {
-        //fnLoadWares(); //加载指定分类下的商品数据
+  apiready = function () {
+    //fnLoadWares(); //加载指定分类下的商品数据
 
-        init();
-        initEventListener();
-        fnGetWareList();
+    init();
+    initEventListener();
+    fnUpdateBanner();
+    fnGetWareList();
 
-        // 下拉刷新
-        api.setRefreshHeaderInfo({
-            visible: true,
-            loadingImg: 'widget://image/refresh.png',
-            bgColor: '#fff',
-            textColor: '#e1017e',
-            showTime: true
-        }, function(ret, err) {
-            fnLoadWares();
-        });
+    // 下拉刷新
+    initRefresh();
 
-        api.addEventListener({
-            name: 'scrolltobottom',
-            extra: {
-                threshold: 300
-            }
-        }, function(ret, err) {
-            fnLoadWares(true);
-        });
+  };
 
+  var currentCity, wareTypeList;
+
+  function init() {
+    currentCity = $api.getStorage('currentCity');
+    wareTypeList = $api.getStorage('wareTypeList');
+  }
+
+  function initEventListener() {
+    api.addEventListener({
+      name: 'scrolltobottom',
+      extra: {
+        threshold: 200
+      }
+    }, function (ret, err) {
+//      fnLoadWares(true);
+      fnGetWareList(true);
+    });
+
+    api.addEventListener({
+      name: 'cityChange'
+    }, function (ret, err) {
+      if (ret) {
+        if (ret.value) {
+          fnGetWareList(ret.value.currentCity.id);
+        }
+      } else {
+        alert(JSON.stringify(err));
+      }
+    });
+
+  }
+
+  function initRefresh() {
+    api.setRefreshHeaderInfo({
+      visible: true,
+      loadingImg: 'widget://image/refresh.png',
+      bgColor: '#fff',
+      textColor: '#e1017e',
+      showTime: true
+    }, function (ret, err) {
+      fnLoadWares();
+    });
+  }
+
+  //加载商品
+  var skip = 0;
+  var limit = 5;
+
+  function fnLoadWares(more) {
+    if (more) {
+      skip += limit;
+    } else {
+      skip = 0;
+    }
+    var params = {
+      fields: {},
+      where: {
+        supportAreaId: "56c80e0c789b068408ab5a6f",
+        wareTypeId: api.pageParam.wareTypeId
+      },
+      skip: skip,
+      limit: limit
     };
 
-    var currentCity, wareTypeList;
-    function init() {
-      currentCity = $api.getStorage('currentCity');
-      wareTypeList = $api.getStorage('wareTypeList');
-    }
-
-    // 上拉加载更多
-    function initEventListener() {
-      api.addEventListener({
-          name: 'cityChange'
-      }, function(ret, err){
-          if( ret ){
-              //  alert( JSON.stringify( ret ) );
-            if(ret.value){
-              // var currentCity = ret.value.currentCity.id;
-              fnGetWareList(ret.value.currentCity.id);
-            }
-          }else{
-               alert( JSON.stringify( err ) );
-          }
-      });
-
-    }
-
-    //加载商品
-    var skip = 0;
-    var limit = 5;
-    function fnLoadWares(more) {
+    api.ajax({
+      url: 'http://d.apicloud.com/mcm/api/ware?filter=' + $api.jsonToStr(params),
+      method: 'get',
+      headers: {
+        "X-APICloud-AppId": "A6921544633372",
+        "X-APICloud-AppKey": "2672b5911d8551540c1ea598e01c87fee217a1e5.1482500122476"
+      }
+    }, function (ret, err) {
+      if (ret) {
+        var strTemplate = $api.html($api.byId('wareTemplate'));
+        var fnTemplate = doT.template(strTemplate);
+        strTemplate = fnTemplate(ret);
+        var list = $api.byId('list');
         if (more) {
-            skip += limit;
+          $api.append(list, strTemplate);
         } else {
-            skip = 0;
+          $api.html(list, strTemplate);
         }
-        var params = {
-            fields: {},
-            where: {
-                supportAreaId: "56c80e0c789b068408ab5a6f",
-                wareTypeId: api.pageParam.wareTypeId
-            },
-            skip: skip,
-            limit: limit
-        };
+        api.refreshHeaderLoadDone();
+      } else {
+        alert(JSON.stringify(err));
+      }
+    });
 
-        api.ajax({
-            url: 'http://d.apicloud.com/mcm/api/ware?filter=' + $api.jsonToStr(params),
-            method: 'get',
-            headers: {
-                "X-APICloud-AppId": "A6921544633372",
-                "X-APICloud-AppKey": "2672b5911d8551540c1ea598e01c87fee217a1e5.1482500122476"
-            }
-        }, function(ret, err) {
-            if (ret) {
-                var strTemplate = $api.html($api.byId('wareTemplate'));
-                var fnTemplate = doT.template(strTemplate);
-                strTemplate = fnTemplate(ret);
-                var list = $api.byId('list');
-                if (more) {
-                    $api.append(list, strTemplate);
-                } else {
-                    $api.html(list, strTemplate);
-                }
-                api.refreshHeaderLoadDone();
-            } else {
-                alert(JSON.stringify(err));
-            }
-        });
+  }
 
-    }
-
-    // 先将网络请求的图片存入缓存
-    function fnLoadImage(ele_) {
-        var dataUrl = $api.attr(ele_, 'data-url');
-        if (dataUrl) {
-            api.imageCache({
-                url: dataUrl
-            }, function(ret, err) {
-                if (ret) {
-                    ele_.src = ret.url;
-                }
-            });
+  // 先将网络请求的图片存入缓存
+  function fnLoadImage(ele_) {
+    var dataUrl = $api.attr(ele_, 'data-url');
+    if (dataUrl) {
+      api.imageCache({
+        url: dataUrl
+      }, function (ret, err) {
+        if (ret) {
+          ele_.src = ret.url;
+          $api.attr(ele_, 'data-url', '');
         }
-
+      });
     }
 
-    //打开商品详情窗口
-    function fnOpenWareWin() {
-        api.openWin({
-            name: 'ware',
-            url: './ware.html',
-            pageParam: {
-                wareId: 'w123456'
-            }
-        });
+  }
 
-    }
+  //打开商品详情窗口
+  function fnOpenWareWin() {
+    api.openWin({
+      name: 'ware',
+      url: './ware.html',
+      pageParam: {
+        wareId: 'w123456'
+      }
+    });
 
-    //加载商品列表
-    function fnGetWareList(currentCityId_) {
-        api.showProgress({
-            style: 'default',
-            animationType: 'fade',
-            title: '努力加载中...',
-            text: '先喝杯茶...',
-            modal: false
-        });
-        var params = {
-            fields: {},
-            where: {
-                supportAreaId: currentCityId_,
-                wareTypeId: wareTypeList[api.pageParam.wareTypeIndex].id
-            },
-            skip: 0,
-            limit: 5
+  }
+
+  function fnUpdateBanner() {
+    var banner = $api.byId('banner');
+    api.imageCache({
+      url: wareTypeList[api.pageParam.wareTypeIndex].banner.url
+    }, function (ret, err) {
+      if (ret) {
+        if (ret && ret.status) {
+          banner.src = ret.url;
         }
-        params = $api.jsonToStr(params);
-        api.ajax({
-            url: 'http://d.apicloud.com/mcm/api/ware?filter=' + params,
-            method: 'get',
-            headers: {
-                "X-APICloud-AppId": "A6914327011091",
-                "X-APICloud-AppKey": "8ac17d22e49cb7982d82796097cec52a6c7cd01d.1475375422841"
-            }
-        }, function(ret, err) {
-            if(ret){
-              api.hideProgress();
-              fnUpdateWareList(ret);
-            }else{
-              console.log($api.jsonToStr(ret));
-            }
-            // console.log(JSON.stringify(ret));
-        });
+      } else {
+        alert(JSON.stringify(err));
+      }
+    });
+  }
+
+  //加载商品列表
+  function fnGetWareList(loadMore_) {
+    api.showProgress({
+      style: 'default',
+      animationType: 'fade',
+      title: '努力加载中...',
+      text: '先喝杯茶...',
+      modal: false
+    });
+
+    if (loadMore_) {
+      skip += limit;
+    } else {
+      skip = 0;
     }
 
-    function fnUpdateWareList(data_) {
-      var list = $api.byId('list');
-      var tempFn = doT.template($api.byId('wareTemplate').innerHTML);
-      var resultText = tempFn(data_);
+    var params = {
+      fields: {},
+      where: {
+        supportAreaId: currentCity.id,
+        wareTypeId: wareTypeList[api.pageParam.wareTypeIndex].id
+      },
+      skip: skip,
+      limit: limit
+    };
+    params = $api.jsonToStr(params);
+    api.ajax({
+      url: 'http://d.apicloud.com/mcm/api/ware?filter=' + params,
+      method: 'get',
+      headers: {
+        "X-APICloud-AppId": "A6914327011091",
+        "X-APICloud-AppKey": "8ac17d22e49cb7982d82796097cec52a6c7cd01d.1475375422841"
+      }
+    }, function (ret, err) {
+      if (ret) {
+        api.hideProgress();
+        api.refreshHeaderLoadDone();
+        fnUpdateWareList(ret, loadMore_);
+      } else {
+        console.log($api.jsonToStr(ret));
+      }
+      // console.log(JSON.stringify(ret));
+    });
+  }
+
+  function fnUpdateWareList(data_, loadMore_) {
+    var list = $api.byId('list');
+    var tempFn = doT.template($api.byId('wareTemplate').innerHTML);
+    var resultText = tempFn(data_);
+    if (loadMore_) {
+      $api.append(list, resultText);
+    } else {
       $api.html(list, resultText);
-
     }
+
+    api.parseTapmode(); //优化click点击速度
+    if (loadMore_) {
+      if (data_.length < limit) {
+        var pushStatus = $api.byId('pushStatus');
+        pushStatus.innerHTML = "没有啦！";
+      }
+    }
+  }
 </script>
 
 </html>
