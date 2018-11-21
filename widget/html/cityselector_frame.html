@@ -78,7 +78,7 @@
             where: {},
             skip: 0,
             limit: 32
-        }
+        };
         params = $api.jsonToStr(params);
         api.ajax({
             url: 'http://d.apicloud.com/mcm/api/supportArea?filter=' + params,
@@ -90,8 +90,6 @@
         }, function(ret, err) {
 
             if (ret) {
-                //console.log(JSON.stringify(ret));
-                //console.log($api.jsonToStr(ret));
                 cityList = ret;
                 fnUpdateCityList(ret);
             } else {
@@ -116,8 +114,9 @@
       var list = $api.byId('list');
       var html = '';
       for (var i = 0; i < data_.length; i++) {
-        data_[i]
-        html += '<div class="city" tapmode onclick="fnSelectCity('+ i +')">'+ data_[i].name +'</div>'
+        if (data_[i].name) {
+          html += '<div class="city" tapmode onclick="fnSelectCity(' + i + ');">' + data_[i].name + '</div>';
+        }
       }
       $api.html(list, html);
     }

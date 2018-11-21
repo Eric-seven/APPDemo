@@ -175,8 +175,8 @@
             </div>
             <div class="control">
                 <div class="panel" id="panel_{{=ware.id}}">
-                    <img class="minus" src="../image/minus.png" tapmode onclick="fnMinus('{{=ware.id}}');">
-                    <div class="count" id="count_{{=ware.id}}">0</div>
+                    <!--<img class="minus" src="../image/minus.png" tapmode onclick="fnMinus('{{=ware.id}}');">-->
+                    <!--<div class="count" id="count_{{=ware.id}}">0</div>-->
                 </div>
                 <img class="add" src="../image/add.png" tapmode onclick="fnAdd('{{=ware.id}}');">
             </div>
@@ -184,7 +184,7 @@
     </div>
     {{??}}
     <div class="ware ware-1">
-        <div class="content" tapmode onclick="fnOpenWareWin();">
+        <div class="content" tapmode onclick="fnOpenWareWin('{{=ware.id}}');">
             <img onload="fnLoadImage(this)" data-url="{{= ware.thumbnail.url}}" src="../image/default_rect.png"
                  class="thumbnail">
             <div class="info">
@@ -232,7 +232,7 @@
     api.addEventListener({
       name: 'scrolltobottom',
       extra: {
-        threshold: 200
+        threshold: 300
       }
     }, function (ret, err) {
 //      fnLoadWares(true);
@@ -244,7 +244,10 @@
     }, function (ret, err) {
       if (ret) {
         if (ret.value) {
-          fnGetWareList(ret.value.currentCity.id);
+          // 更新当前城市信息
+          currentCity = ret.value.currentCity;
+          // 更新商品列表
+          fnGetWareList(false);
         }
       } else {
         alert(JSON.stringify(err));
@@ -328,12 +331,12 @@
   }
 
   //打开商品详情窗口
-  function fnOpenWareWin() {
+  function fnOpenWareWin(wareId_) {
     api.openWin({
       name: 'ware',
       url: './ware.html',
       pageParam: {
-        wareId: 'w123456'
+        wareId: wareId_
       }
     });
 
@@ -413,7 +416,7 @@
     if (loadMore_) {
       if (data_.length < limit) {
         var pushStatus = $api.byId('pushStatus');
-        pushStatus.innerHTML = "没有啦！";
+        pushStatus.innerHTML = "我是有底线的";
       }
     }
   }
